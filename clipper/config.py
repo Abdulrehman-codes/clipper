@@ -110,6 +110,17 @@ class EncodeConfig(BaseModel):
     fps: int = 30
 
 
+class TranscribeConfig(BaseModel):
+    # base|small|medium|large-v3 -- bigger = far better (esp. non-English), slower.
+    model: str = "small"
+    # ISO code to force a language ("ur", "hi", "en", ...); None = auto-detect.
+    language: Optional[str] = None
+    # "transcribe" (keep original language) | "translate" (to English).
+    task: str = "transcribe"
+    device: str = "auto"         # auto | cpu | cuda
+    compute_type: Optional[str] = None  # None = auto (int8 cpu / float16 cuda)
+
+
 class OutputConfig(BaseModel):
     formats: str = "both"  # both | vertical | horizontal
 
@@ -127,6 +138,7 @@ class UploadConfig(BaseModel):
 class Config(BaseModel):
     highlight: HighlightConfig = HighlightConfig()
     llm: LLMConfig = LLMConfig()
+    transcribe: TranscribeConfig = TranscribeConfig()
     caption: CaptionConfig = CaptionConfig()
     reframe: ReframeConfig = ReframeConfig()
     encode: EncodeConfig = EncodeConfig()

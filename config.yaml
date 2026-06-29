@@ -10,6 +10,15 @@ highlight:
   # Hard cap on number of clips per run.
   max_clips: 8
 
+transcribe:
+  # §4.2. Whisper model + language. For NON-ENGLISH audio use a large model and
+  # ideally set `language` -- a small model with auto-detect produces garbage.
+  model: "large-v3"      # base | small | medium | large-v3 (bigger = better, slower)
+  language: null         # source ISO code "ur"/"hi"/"en"; null = auto-detect
+  task: "translate"      # transcribe (keep original) | translate (to English)
+  device: "auto"         # auto | cpu | cuda  (auto uses the GPU if available)
+  compute_type: null     # null = auto (float16 on cuda, int8 on cpu)
+
 llm:
   # §2 / §4.3 / §4.7. OpenAI-SDK-compatible. Default is Groq (set provider/base_url
   # + model strings to switch providers). VERIFY model strings in your provider's

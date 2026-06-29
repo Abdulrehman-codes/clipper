@@ -56,12 +56,12 @@ def _adopt_from_prior_runs(url: str, dst: Path, info_dst: Path) -> bool:
         if same and src.exists():
             shutil.copy2(src, dst)
             info_dst.write_text(json.dumps(meta, indent=2), encoding="utf-8")
-            # Adopt sibling audio.wav / transcript.json too, if present, so we
-            # also skip re-extracting audio and re-transcribing.
-            for name in ("audio.wav", "transcript.json"):
-                sib = info_file.parent / name
-                if sib.exists():
-                    shutil.copy2(sib, dst.parent / name)
+            # Adopt the sibling audio.wav too (model-independent). We deliberately
+            # do NOT adopt transcript.json: transcripts are keyed by model/task and
+            # an old tiny-model transcript could be poor quality.
+            wav = info_file.parent / "audio.wav"
+            if wav.exists():
+                shutil.copy2(wav, dst.parent / "audio.wav")
             log_event("download", "adopted_from_run", source=str(src), cache=str(dst))
             return True
     return False

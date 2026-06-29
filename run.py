@@ -21,6 +21,16 @@ MIN_SCORE = 0.6
 # Which renders to make:  "both" | "vertical" | "horizontal"
 FORMATS = "both"
 
+# --- Transcription (Whisper) -------------------------------------------------
+# Model: "base" | "small" | "medium" | "large-v3"  (bigger = more accurate,
+# slower on CPU; on a GPU large-v3 is fast). For non-English audio use large-v3.
+WHISPER_MODEL = "large-v3"
+# Source language ISO code, e.g. "ur" (Urdu), "hi" (Hindi), "en". None = auto.
+LANGUAGE = None
+# True  -> translate speech to ENGLISH captions.
+# False -> keep the original spoken language.
+TRANSLATE_TO_ENGLISH = True
+
 # False = just make the clip files (no YouTube, no login needed).
 # True  = also upload as PRIVATE drafts (requires `clipper auth` first).
 UPLOAD = False
@@ -63,6 +73,9 @@ def main() -> int:
     cfg = get_config()
     cfg.highlight.max_clips = MAX_CLIPS
     cfg.highlight.min_score = MIN_SCORE
+    cfg.transcribe.model = WHISPER_MODEL
+    cfg.transcribe.language = LANGUAGE
+    cfg.transcribe.task = "translate" if TRANSLATE_TO_ENGLISH else "transcribe"
 
     run_id = _make_run_id(url)
     rdir = run_path(run_id)
