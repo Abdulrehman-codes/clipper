@@ -18,6 +18,34 @@ from ..logging_utils import log_event
 from ..types import ClipState, Word
 
 
+def _ensure_cuda_dlls() -> None:
+    """Register NVIDIA cuBLAS/cuDNN DLL dirs so CTranslate2 can load them on GPU.
+
+    faster-whisper's GPU path needs cublas64_12.dll + cuDNN. When installed via
+    the pip wheels (nvidia-cublas-cu12 / nvidia-cudnn-cu12) the DLLs live under
+    site-packages/nvidia/*/bin but aren't on PATH on Windows -- add them here."""
+    if os.name != "nt":
+        return
+    import glob
+    import sysconfig
+
+    roots = {sysconfig.get_paths().get("purelib", "")}
+    for root in roots:
+        if not root:
+            continue
+        for binpath in glob.glob(os.path.join(root, "nvidia", "*", "bin")):
+            if not os.path.isdir(binpath):
+                continue
+            try:
+                os.add_dll_directory(binpath)
+            except (OSError, AttributeError):
+                pass
+            # CTranslate2 loads cuBLAS/cuDNN via plain LoadLibrary, which honours
+            # PATH but not always add_dll_directory -- so prepend to PATH too.
+            if binpath not in os.environ.get("PATH", ""):
+                os.environ["PATH"] = binpath + os.pathsep + os.environ.get("PATH", "")
+
+
 def _cuda_available() -> bool:
     try:
         import ctranslate2
@@ -76,6 +104,8 @@ def _transcribe_faster_whisper(audio_path: str, cfg: TranscribeConfig,
     from faster_whisper import WhisperModel  # lazy import
 
     model_size, device, compute_type, language = _resolve(cfg, force_device)
+    if device == "cuda":
+        _ensure_cuda_dlls()
     model = WhisperModel(model_size, device=device, compute_type=compute_type)
 
     segments, info = model.transcribe(

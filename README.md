@@ -65,6 +65,22 @@ lighter pipeline slices run without installing everything. If WhisperX/MediaPipe
 are absent, the pipeline degrades gracefully (faster-whisper fallback; static
 center-crop reframe).
 
+**GPU transcription (recommended for large models / non-English):**
+
+```bash
+pip install faster-whisper            # transcription backend
+pip install -e ".[cuda]"              # NVIDIA cuBLAS + cuDNN + CUDA runtime
+```
+
+With a CUDA 12 GPU, set `transcribe.device: auto` (the default) and a big model
+(`large-v3`) in `config.yaml` — a 27-min video transcribes in ~7 min vs ~hour on
+CPU. The transcribe node auto-registers the NVIDIA DLLs (adds them to the DLL
+search path / `PATH`), and falls back to CPU if a CUDA call fails.
+
+**Non-English audio:** use `large-v3` and set `transcribe.task: translate` for
+English captions (or `transcribe.language` to force the source language). A small
+model with auto-detect produces garbage on non-English speech.
+
 Copy `.env.example` → `.env` and fill in your keys:
 
 ```bash

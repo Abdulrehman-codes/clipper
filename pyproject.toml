@@ -33,6 +33,14 @@ transcribe = [
     "whisperx>=3.1",
     "faster-whisper>=1.0",
 ]
+# NVIDIA CUDA runtime libs so faster-whisper/CTranslate2 can use the GPU on
+# Windows (cuBLAS + cuDNN + CUDA runtime). The transcribe node adds these to the
+# DLL search path automatically. Needs a CUDA 12 capable driver.
+cuda = [
+    "nvidia-cublas-cu12",
+    "nvidia-cudnn-cu12",
+    "nvidia-cuda-runtime-cu12",
+]
 # Active-speaker reframing.
 reframe = [
     "mediapipe>=0.10",
