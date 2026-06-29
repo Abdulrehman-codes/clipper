@@ -25,12 +25,23 @@ from ..types import Segment, Word
 
 # --- prompts --------------------------------------------------------------
 
-HIGHLIGHT_SYSTEM_PROMPT = """\
+def highlight_system_prompt(min_s: float, max_s: float) -> str:
+    target = int((min_s + max_s) / 2)
+    return f"""\
 You are an expert short-form video editor. You are given the full word-level \
 timestamped transcript of a long-form video. Find the strongest self-contained \
-moments to cut into shorts.
+segments to cut into shorts.
 
-Each selected moment MUST:
+CRITICAL LENGTH REQUIREMENT:
+- Each highlight MUST be between {int(min_s)} and {int(max_s)} seconds long \
+(end - start). Aim for around {target} seconds.
+- NEVER return a clip shorter than {int(min_s)} seconds. A single sentence or \
+one-liner is too short -- EXPAND the window to include the full surrounding \
+exchange: the setup/build-up AND the payoff, so it stands on its own.
+- If a great moment is short, extend `start` earlier and `end` later (to clean \
+sentence boundaries) until it reaches at least {int(min_s)} seconds.
+
+Each highlight MUST also:
 - have a strong HOOK within its first 3 seconds,
 - contain a clear PAYOFF (insight, punchline, emotional beat, or resolution),
 - start and end on clean sentence boundaries (do not cut mid-sentence),
@@ -38,11 +49,12 @@ Each selected moment MUST:
 
 Return ONLY a JSON object with a "highlights" array. No prose, no markdown \
 fences, no commentary. Schema:
-{"highlights": [{"start": <float seconds>, "end": <float seconds>, \
-"hook_title": <string>, "rationale": <string>, "score": <float 0.0-1.0>}]}
+{{"highlights": [{{"start": <float seconds>, "end": <float seconds>, \
+"hook_title": <string>, "rationale": <string>, "score": <float 0.0-1.0>}}]}}
 
 `score` is your confidence that this is a great standalone short. Prefer fewer, \
-higher-quality picks over many mediocre ones."""
+higher-quality picks over many mediocre ones, but every pick MUST satisfy the \
+length requirement above."""
 
 METADATA_SYSTEM_PROMPT = """\
 You are a YouTube Shorts metadata specialist. Given a short clip's transcript \
@@ -107,8 +119,20 @@ class GrokClient:
         raise last_exc  # pragma: no cover
 
     # --- highlight selection (§4.3) -------------------------------------
-    def select_highlights(self, transcript: list[dict], context: str = "") -> list[Segment]:
+    def select_highlights(
+        self,
+        transcript: list[dict],
+        context: str = "",
+        min_duration_s: Optional[float] = None,
+        max_duration_s: Optional[float] = None,
+    ) -> list[Segment]:
         llm = self.config.llm
+        # Tell the model the target length so it returns full-length clips, not
+        # one-liners we'd later reject (the duration filter lives downstream).
+        hl = self.config.highlight
+        min_s = min_duration_s if min_duration_s is not None else hl.min_duration_s
+        max_s = max_duration_s if max_duration_s is not None else hl.max_duration_s
+        system = highlight_system_prompt(min_s, max_s)
         # Compact, line-grouped transcript -> far fewer tokens than per-word.
         lines = _format_transcript_lines(transcript, llm.words_per_line)
         chunks = _chunk_lines(lines, llm.max_input_tokens)
@@ -127,7 +151,7 @@ class GrokClient:
                 + chunk_text
                 + "\n\nReturn the JSON object of highlights now."
             )
-            data = self._chat_json(llm.highlight_model, HIGHLIGHT_SYSTEM_PROMPT, user)
+            data = self._chat_json(llm.highlight_model, system, user)
             all_segments.extend(_parse_segments(_coerce_array(data)))
 
             # Pace under the TPM budget before the next request (§4.3).
