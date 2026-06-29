@@ -30,9 +30,18 @@ class Settings(BaseSettings):
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
+    # LLM key. The pipeline is OpenAI-SDK-compatible, so any compatible provider
+    # works (xAI Grok, Groq, ...). We accept several env var names and resolve in
+    # priority order so an existing key just works regardless of provider.
     xai_api_key: Optional[str] = None
+    groq_api_key: Optional[str] = None
+    llm_api_key: Optional[str] = None
     youtube_client_secrets: str = "client_secret.json"
     youtube_token_path: str = "youtube_token.json"
+
+    @property
+    def resolved_llm_key(self) -> Optional[str]:
+        return self.llm_api_key or self.groq_api_key or self.xai_api_key
 
 
 # --- config.yaml sections (§6) -------------------------------------------
@@ -45,6 +54,8 @@ class HighlightConfig(BaseModel):
 
 
 class LLMConfig(BaseModel):
+    # provider is informational; behaviour is driven by base_url + model strings.
+    provider: str = "groq"
     base_url: str = "https://api.x.ai/v1"
     highlight_model: str = "grok-4.1-fast"
     metadata_model: str = "grok-4.3"

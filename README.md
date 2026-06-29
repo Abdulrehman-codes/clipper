@@ -32,7 +32,7 @@ API uploads from an un-audited Google Cloud project may be **restricted to priva
 | Orchestration | **LangGraph** — `StateGraph`, one node per stage, retry policy per node, `Send` fan-out |
 | Download | **yt-dlp** (bestvideo+bestaudio, remux to mp4) |
 | Transcription | **WhisperX** (word-level timestamps + alignment); fallback **faster-whisper** |
-| LLM | **Grok via xAI** (OpenAI-SDK-compatible, `base_url=https://api.x.ai/v1`) |
+| LLM | **OpenAI-SDK-compatible** — defaults to **Groq** (`llama-3.3-70b-versatile`); switch to xAI Grok via `config.yaml` |
 | Cutting / encode | **ffmpeg** (subprocess) |
 | Reframe | **MediaPipe** face detection + OpenCV for the 9:16 active-speaker crop |
 | Captions | Word-level **ASS** karaoke subtitles, burned in via ffmpeg |
@@ -41,7 +41,7 @@ API uploads from an un-audited Google Cloud project may be **restricted to priva
 
 Python ≥ 3.11. **ffmpeg must be on PATH.**
 
-> **Model strings change.** `grok-4.1-fast` (highlight selection) and `grok-4.3` (metadata) are set in [`config.yaml`](config.yaml) → `llm.*`. **Verify the exact strings in the [xAI console](https://console.x.ai)** before a real run.
+> **LLM provider is configurable.** The pipeline talks to any OpenAI-SDK-compatible endpoint via [`config.yaml`](config.yaml) → `llm.*` (`base_url` + `highlight_model` + `metadata_model`). Default is **Groq** (`llama-3.3-70b-versatile`); a commented xAI Grok block is included. Set `GROQ_API_KEY` (or `XAI_API_KEY` / `LLM_API_KEY`) in `.env`. **Model strings change — verify them in your provider's console.** Note: Groq's 128k context is smaller than Grok's 2M, so very long transcripts may need chunking.
 
 ---
 

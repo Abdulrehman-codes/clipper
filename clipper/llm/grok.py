@@ -32,9 +32,10 @@ Each selected moment MUST:
 - start and end on clean sentence boundaries (do not cut mid-sentence),
 - stand alone without external context.
 
-Return ONLY a JSON array. No prose, no markdown fences, no commentary. Schema:
-[{"start": <float seconds>, "end": <float seconds>, "hook_title": <string>, \
-"rationale": <string>, "score": <float 0.0-1.0>}]
+Return ONLY a JSON object with a "highlights" array. No prose, no markdown \
+fences, no commentary. Schema:
+{"highlights": [{"start": <float seconds>, "end": <float seconds>, \
+"hook_title": <string>, "rationale": <string>, "score": <float 0.0-1.0>}]}
 
 `score` is your confidence that this is a great standalone short. Prefer fewer, \
 higher-quality picks over many mediocre ones."""
@@ -58,14 +59,16 @@ class GrokClient:
     def __init__(self, settings: Optional[Settings] = None, config: Optional[Config] = None):
         self.settings = settings or get_settings()
         self.config = config or get_config()
-        if not self.settings.xai_api_key:
+        api_key = self.settings.resolved_llm_key
+        if not api_key:
             raise GrokError(
-                "XAI_API_KEY is not set. Add it to .env (see .env.example)."
+                "No LLM API key set. Add GROQ_API_KEY (or XAI_API_KEY / LLM_API_KEY) "
+                "to .env (see .env.example)."
             )
         from openai import OpenAI  # lazy import
 
         self._client = OpenAI(
-            api_key=self.settings.xai_api_key,
+            api_key=api_key,
             base_url=self.config.llm.base_url,
             timeout=self.config.llm.request_timeout_s,
         )
