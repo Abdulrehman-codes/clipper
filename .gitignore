@@ -1,5 +1,7 @@
 # --- clipper artifacts (§1, §7: runs/ is gitignored) ---
 runs/
+# per-video cache (downloads, audio, transcripts) -- reused across runs
+cache/
 
 # --- secrets (§1: no secrets in code) ---
 .env

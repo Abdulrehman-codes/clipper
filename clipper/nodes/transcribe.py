@@ -11,7 +11,7 @@ import json
 import os
 from pathlib import Path
 
-from ..config import run_path
+from ..config import cache_path
 from ..logging_utils import log_event
 from ..types import ClipState, Word
 
@@ -70,12 +70,12 @@ def _transcribe_faster_whisper(audio_path: str, model_size: str = "base") -> lis
 
 
 def transcribe(state: ClipState) -> dict:
-    run_id = state["run_id"]
     audio_path = state.get("audio_path")
     if not audio_path:
         raise ValueError("transcribe: no audio_path in state (download must run first)")
 
-    transcript_file = run_path(run_id) / "transcript.json"
+    # Cache the transcript next to the cached source (per-video, reused across runs).
+    transcript_file = cache_path(state["source_url"]) / "transcript.json"
     if transcript_file.exists():
         words = json.loads(transcript_file.read_text(encoding="utf-8"))
         log_event("transcribe", "reuse_cached", words=len(words), file=str(transcript_file))

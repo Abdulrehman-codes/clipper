@@ -7,7 +7,9 @@ the §1 constraint: no secrets in config files that get committed.
 
 from __future__ import annotations
 
+import hashlib
 import os
+import re
 from functools import lru_cache
 from pathlib import Path
 from typing import Optional
@@ -20,6 +22,9 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_CONFIG_PATH = REPO_ROOT / "config.yaml"
 RUNS_DIR = REPO_ROOT / "runs"
+# Per-video cache for reusable heavy artifacts (download, audio, transcript) so
+# re-running the SAME URL never re-downloads or re-transcribes (§1 idempotency).
+CACHE_DIR = REPO_ROOT / "cache"
 
 # Load .env once at import so os.environ is populated for Settings.
 load_dotenv(REPO_ROOT / ".env")
@@ -155,5 +160,31 @@ def runs_dir() -> Path:
 
 def run_path(run_id: str) -> Path:
     p = runs_dir() / run_id
+    p.mkdir(parents=True, exist_ok=True)
+    return p
+
+
+def video_key(url: str) -> str:
+    """Stable cache key for a video URL.
+
+    Uses the YouTube video id when we can extract one (so youtu.be/<id>,
+    watch?v=<id>, and /shorts/<id> for the same video share a cache), else a
+    hash of the URL."""
+    url = url.strip()
+    patterns = [
+        r"[?&]v=([\w-]{11})",                              # watch?v=<id> / &v=<id>
+        r"youtu\.be/([\w-]{11})",                          # youtu.be/<id>
+        r"youtube\.com/(?:shorts|embed|v)/([\w-]{11})",    # /shorts|embed|v/<id>
+    ]
+    for pat in patterns:
+        m = re.search(pat, url)
+        if m:
+            return m.group(1)
+    return hashlib.sha1(url.encode("utf-8")).hexdigest()[:11]
+
+
+def cache_path(url: str) -> Path:
+    """Directory holding cached source.mp4 / audio.wav / transcript.json for a URL."""
+    p = CACHE_DIR / video_key(url)
     p.mkdir(parents=True, exist_ok=True)
     return p

@@ -98,11 +98,14 @@ clipper auth
 ### Output layout
 
 ```
-runs/<run_id>/
-  rights.json            # ingest-gate audit record
-  source.mp4  audio.wav  # download + extracted 16kHz mono audio
-  transcript.json        # word-level timestamps (cached)
-  segments.json          # LLM-selected highlights (cached)
+cache/<video_id>/        # per-video, reused across runs (never re-downloaded)
+  source.mp4  audio.wav   # download + extracted 16kHz mono audio
+  transcript.json         # word-level timestamps
+  source_info.json        # title / channel / duration / id
+
+runs/<run_id>/           # per-run outputs
+  rights.json             # ingest-gate audit record
+  segments.json           # LLM-selected highlights (cached per run)
   clip_00_base.mp4              # the cut (16:9)
   clip_00_vertical.mp4          # 9:16 reframe
   clip_00_*_captioned.mp4       # caption-burned renders (what gets uploaded)
@@ -110,6 +113,11 @@ runs/<run_id>/
   report.md  report.json        # per-clip summary + upload status
   run.log                       # structured JSONL events
 ```
+
+> **Re-runs are cheap.** The heavy artifacts (download, audio, transcript) are
+> cached per-video under `cache/<id>/` and reused on every subsequent run of the
+> same URL — so a failed run never re-downloads. If a clip render fails partway,
+> just run again: it skips straight to selection/rendering.
 
 ---
 
