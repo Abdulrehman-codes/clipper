@@ -1,0 +1,72 @@
+# clipper tunables (§6). Loaded by clipper/config.py.
+# CLI flags override anything set here.
+
+highlight:
+  # §4.3 filter: 15-90s duration window.
+  min_duration_s: 15
+  max_duration_s: 90
+  # Keep only segments at or above this score (0.0-1.0).
+  min_score: 0.6
+  # Hard cap on number of clips per run.
+  max_clips: 8
+
+llm:
+  # §2 / §4.3 / §4.7. VERIFY exact model strings in the xAI console -- they change.
+  base_url: "https://api.x.ai/v1"
+  highlight_model: "grok-4.1-fast"   # cheap, 2M ctx, used to pick segments
+  metadata_model: "grok-4.3"         # optional polish for titles/descriptions
+  temperature: 0.4
+  request_timeout_s: 120
+
+caption:
+  # §4.6 burned-in ASS karaoke captions. Used for both 9:16 and 16:9.
+  font: "Arial"
+  font_size: 18           # in ASS script units (PlayResY = 1080 baseline)
+  primary_color: "&H00FFFFFF"      # white (ASS BGR + alpha)
+  highlight_color: "&H0000F0FF"    # active-word highlight (yellow-ish)
+  outline: 3
+  shadow: 1
+  max_chars_per_line: 28
+  max_lines: 2
+  # Vertical position as fraction of frame height (0=top, 1=bottom).
+  # 0.78 keeps captions inside the 9:16 safe area, clear of UI chrome.
+  vertical_anchor: 0.78
+
+reframe:
+  # §4.5 active-speaker crop.
+  target_vertical: "9:16"
+  target_horizontal: "16:9"
+  # EMA smoothing factor for the crop box (0..1). Lower = smoother / laggier.
+  smoothing: 0.15
+  # Max crop-center movement per frame as fraction of frame width. Caps velocity
+  # so the crop never snaps -- "smoothing matters more than accuracy" (§4.5).
+  max_velocity: 0.04
+  # Detection confidence threshold for MediaPipe face detector.
+  detection_confidence: 0.5
+  # Fill mode when no face is found: "blur" (blurred fill) or "letterbox".
+  fallback_fill: "blur"
+
+encode:
+  # §4.4 / §4.5 encode settings used when re-encode is required.
+  video_codec: "libx264"
+  crf: 20
+  preset: "veryfast"
+  audio_codec: "aac"
+  audio_bitrate: "160k"
+  fps: 30
+
+output:
+  # §5 --formats default. one of: both | vertical | horizontal
+  formats: "both"
+
+upload:
+  # §4.8 quota-aware uploader.
+  privacy_status: "private"     # HARD CONSTRAINT (§1): never anything else in MVP.
+  category_id: "22"             # "People & Blogs"
+  made_for_kids: false
+  # Approx cost per videos.insert and daily quota -> derive uploads/day budget.
+  insert_cost_units: 1600
+  daily_quota_units: 10000
+  # Exponential backoff for transient upload errors.
+  max_retries: 5
+  backoff_base_s: 2

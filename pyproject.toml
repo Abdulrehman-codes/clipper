@@ -1,0 +1,68 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "clipper"
+version = "0.1.0"
+description = "LangGraph pipeline: long-form YouTube video -> short vertical/horizontal clips, uploaded as PRIVATE drafts for human review."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "clipper contributors" }]
+keywords = ["langgraph", "youtube", "shorts", "whisperx", "ffmpeg", "grok"]
+
+# Core dependencies needed to wire the graph + CLI. Heavy / optional model
+# dependencies are isolated into extras so a contributor can run the lighter
+# slices (download/transcribe-cache/highlight) without installing everything.
+dependencies = [
+    "langgraph>=0.2.0",
+    "pydantic>=2.6",
+    "pydantic-settings>=2.2",
+    "python-dotenv>=1.0",
+    "PyYAML>=6.0",
+    "typer>=0.12",
+    "rich>=13.7",
+    "openai>=1.30",            # xAI Grok is OpenAI-SDK-compatible
+    "yt-dlp>=2024.4.9",
+]
+
+[project.optional-dependencies]
+# Transcription. WhisperX is primary; faster-whisper is the documented fallback.
+transcribe = [
+    "whisperx>=3.1",
+    "faster-whisper>=1.0",
+]
+# Active-speaker reframing.
+reframe = [
+    "mediapipe>=0.10",
+    "opencv-python>=4.9",
+    "numpy>=1.26",
+]
+# YouTube Data API v3 upload.
+youtube = [
+    "google-api-python-client>=2.120",
+    "google-auth>=2.29",
+    "google-auth-oauthlib>=1.2",
+]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.4",
+]
+# Everything.
+all = [
+    "clipper[transcribe,reframe,youtube,dev]",
+]
+
+[project.scripts]
+clipper = "clipper.cli:app"
+
+[tool.setuptools.packages.find]
+include = ["clipper*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

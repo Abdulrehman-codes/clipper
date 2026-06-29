@@ -1,0 +1,34 @@
+# --- clipper artifacts (§1, §7: runs/ is gitignored) ---
+runs/
+
+# --- secrets (§1: no secrets in code) ---
+.env
+client_secret*.json
+*token*.json
+youtube_token.json
+
+# --- python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+env/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# --- editor / os ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# --- model / media caches ---
+*.pt
+*.bin
+tmp/
+*.tmp
