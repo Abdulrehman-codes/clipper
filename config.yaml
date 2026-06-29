@@ -26,6 +26,14 @@ llm:
   metadata_model: "llama-3.3-70b-versatile"    # titles/descriptions
   temperature: 0.4
   request_timeout_s: 120
+  # Rate-limit / chunking (§4.3). The transcript is compacted + split into
+  # requests of <= max_input_tokens, paced under tpm_limit. Tuned for Groq's
+  # free tier (12k tokens/min). On a paid tier, raise both for fewer/faster calls.
+  max_input_tokens: 5000
+  tpm_limit: 12000
+  max_retries: 6
+  backoff_base_s: 5
+  words_per_line: 12
 
 caption:
   # §4.6 burned-in ASS karaoke captions. Used for both 9:16 and 16:9.

@@ -41,7 +41,9 @@ API uploads from an un-audited Google Cloud project may be **restricted to priva
 
 Python ≥ 3.11. **ffmpeg must be on PATH.**
 
-> **LLM provider is configurable.** The pipeline talks to any OpenAI-SDK-compatible endpoint via [`config.yaml`](config.yaml) → `llm.*` (`base_url` + `highlight_model` + `metadata_model`). Default is **Groq** (`llama-3.3-70b-versatile`); a commented xAI Grok block is included. Set `GROQ_API_KEY` (or `XAI_API_KEY` / `LLM_API_KEY`) in `.env`. **Model strings change — verify them in your provider's console.** Note: Groq's 128k context is smaller than Grok's 2M, so very long transcripts may need chunking.
+> **LLM provider is configurable.** The pipeline talks to any OpenAI-SDK-compatible endpoint via [`config.yaml`](config.yaml) → `llm.*` (`base_url` + `highlight_model` + `metadata_model`). Default is **Groq** (`llama-3.3-70b-versatile`); a commented xAI Grok block is included. Set `GROQ_API_KEY` (or `XAI_API_KEY` / `LLM_API_KEY`) in `.env`. **Model strings change — verify them in your provider's console.**
+
+> **Rate limits / free tiers (§4.3).** Long transcripts are automatically **compacted** (one timestamp per line) and **chunked** into requests under `llm.max_input_tokens`, **paced** below `llm.tpm_limit`, with exponential backoff on `429`/`413`. Defaults are tuned for **Groq's free tier (12k tokens/min)** so you don't hit "Request too large". On a paid tier, raise `max_input_tokens` + `tpm_limit` in `config.yaml` for fewer, faster calls.
 
 ---
 

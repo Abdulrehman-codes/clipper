@@ -61,6 +61,18 @@ class LLMConfig(BaseModel):
     metadata_model: str = "grok-4.3"
     temperature: float = 0.4
     request_timeout_s: float = 120
+    # --- rate-limit / context handling (§4.3 "chunk if >context") ----------
+    # Max transcript tokens to send per highlight request. Keep under the
+    # provider's tokens-per-minute (TPM) limit. Groq free tier = 12k TPM, so a
+    # conservative budget here lets a long transcript be chunked + paced.
+    max_input_tokens: int = 5000
+    # Provider TPM budget, used to pace requests so we don't trip 429s.
+    tpm_limit: int = 12000
+    # Retries + base backoff (seconds) for rate-limit (429 / 413) errors.
+    max_retries: int = 6
+    backoff_base_s: float = 5
+    # Words grouped per transcript line (fewer timestamps = far fewer tokens).
+    words_per_line: int = 12
 
 
 class CaptionConfig(BaseModel):

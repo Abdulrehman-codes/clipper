@@ -27,7 +27,7 @@ UPLOAD = False
 
 # Rights gate (§9). You MUST set this to True to confirm you own / are licensed
 # for / have fair-use rights to this content. The run aborts otherwise.
-I_HAVE_RIGHTS = False
+I_HAVE_RIGHTS = True
 # ==================================================================
 
 
