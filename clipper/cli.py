@@ -40,7 +40,9 @@ def _looks_like_url(url: str) -> bool:
 
 @app.command()
 def run(
-    youtube_url: str = typer.Argument(..., help="YouTube video URL to clip."),
+    youtube_url: str = typer.Argument(
+        None, help="YouTube video URL. If omitted, you'll be prompted to paste it."
+    ),
     i_have_rights: bool = typer.Option(
         False, "--i-have-rights",
         help="Confirm you own / are licensed for / have fair-use rights to this content (§1).",
@@ -52,10 +54,18 @@ def run(
         False, "--no-upload", help="Stop after rendering; do not upload (§4.8)."
     ),
 ):
-    """Run the full pipeline on a YouTube URL."""
-    if not _looks_like_url(youtube_url):
-        console.print("[red]Error:[/red] argument does not look like an http(s) URL.")
-        raise typer.Exit(2)
+    """Run the full pipeline on a YouTube URL.
+
+    Pass the URL as an argument, or run `clipper run` with no URL to be prompted
+    (handy in PowerShell, where an unquoted URL's `&` breaks the command line).
+    """
+    # Prompt for the URL when not given on the command line (re-prompt until valid).
+    if not youtube_url:
+        youtube_url = typer.prompt("Paste the YouTube URL")
+    youtube_url = youtube_url.strip().strip('"').strip("'")
+    while not _looks_like_url(youtube_url):
+        console.print("[red]That doesn't look like an http(s) URL.[/red]")
+        youtube_url = typer.prompt("Paste the YouTube URL").strip().strip('"').strip("'")
 
     # Ingest gate (§1): explicit flag OR interactive y/N confirmation. Abort if absent.
     rights = i_have_rights
